@@ -8,7 +8,6 @@ app = Flask(__name__)
 DATA_FILE = "parking_data.json"
 EXCEL_FILE = "遠雄車位管理.xlsx"
 
-# 預設名單與車位
 DEFAULT_USERS = ["陳惠娥", "吳品聰", "楊文明", "林惠婷", "許文蘭", "陳昶源", "王佑毓", "徐崇淵"]
 DEFAULT_SPOTS = [
     {"floor": "B4", "id": "437", "owner": "陳惠娥", "rule": "週一～週五"},
@@ -36,7 +35,6 @@ def load_initial_data():
     users = list(DEFAULT_USERS)
     spots = list(DEFAULT_SPOTS)
 
-    # 嘗試讀取 Excel（若無檔案則直接採用預設值，避免雲端崩潰）
     if os.path.exists(EXCEL_FILE):
         try:
             import pandas as pd
@@ -56,7 +54,7 @@ def load_initial_data():
             if loaded_spots:
                 spots = loaded_spots
         except Exception as e:
-            print(f"讀取 Excel 失敗，自動採用預設名單: {e}")
+            print(f"讀取 Excel 失敗: {e}")
 
     data = {
         "users": users,
@@ -76,9 +74,7 @@ def daily_reset():
     data["today_records"] = {}
     data["last_reset_date"] = str(datetime.date.today())
     save_data(data)
-    print(f"[{datetime.datetime.now()}] 當日車位已自動重置！")
 
-# 啟動定時排程（半夜 00:00 自動清空）
 scheduler = BackgroundScheduler()
 scheduler.add_job(daily_reset, "cron", hour=0, minute=0)
 scheduler.start()
@@ -86,7 +82,7 @@ scheduler.start()
 def is_rule_active_today(rule_str):
     if not rule_str:
         return False
-    weekday = datetime.date.today().weekday()  # 0=週一, 1=週二 ... 6=週日
+    weekday = datetime.date.today().weekday()
     if "週一～週五" in rule_str or "週一~週五" in rule_str:
         return 0 <= weekday <= 4
     elif "週一～週三" in rule_str or "週一~週三" in rule_str:
